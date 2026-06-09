@@ -1,0 +1,270 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            Int       @id @default(autoincrement())
+  name          String?
+  email         String?
+  mobile        String?   @unique
+  password      String?
+  referral_code String?
+  friends_code  String?
+  reward_points Int?      @default(0)
+  status        String?   @default("active")
+  access_panel  String?
+  iso_2         String?
+  country       String?
+
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  @@map("users")
+}
+
+model UserOtp {
+  id          Int       @id @default(autoincrement())
+  mobile      String
+  otp         String
+  expires_at  DateTime
+  verified_at DateTime?
+  attempts    Int       @default(0)
+
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  @@map("user_otps")
+}
+
+model SellerUser {
+  id        Int      @id @default(autoincrement())
+  user_id   Int?
+  seller_id Int?
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("seller_user")
+}
+
+model DeliveryZone {
+  id                                Int      @id @default(autoincrement())
+  name                              String   @unique
+  slug                              String   @unique
+  center_latitude                   Decimal  @db.Decimal(10, 8)
+  center_longitude                  Decimal  @db.Decimal(11, 8)
+  radius_km                         Float
+  boundary_json                     Json?
+  rush_delivery_enabled             Boolean  @default(false)
+  delivery_time_per_km              Int      @default(0)
+  rush_delivery_time_per_km         Int?
+  rush_delivery_charges             Int?
+  regular_delivery_charges          Int      @default(0)
+  free_delivery_amount              Int?
+  distance_based_delivery_charges   Int?
+  per_store_drop_off_fee            Int?
+  handling_charges                  Int?
+  buffer_time                       Int      @default(0)
+  status                            String   @default("active")
+  delivery_boy_base_fee             Decimal? @db.Decimal(10, 2)
+  delivery_boy_per_store_pickup_fee Decimal? @db.Decimal(10, 2)
+  delivery_boy_distance_based_fee   Decimal? @db.Decimal(10, 2)
+  delivery_boy_per_order_incentive  Decimal? @db.Decimal(10, 2)
+
+  storeZones StoreZone[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("delivery_zones")
+}
+
+// Store Model
+model Store {
+  id                             Int      @id @default(autoincrement())
+  seller_id                      Int?
+  name                           String
+  slug                           String
+  latitude                       Decimal? @db.Decimal(10, 8)
+  longitude                      Decimal? @db.Decimal(11, 8)
+  address                        String?
+  city                           String?
+  landmark                       String?
+  state                          String?
+  zipcode                        String?
+  country                        String?
+  country_code                   String?
+  contact_email                  String?
+  contact_number                 String?
+  description                    String?  @db.Text
+  timing                         String?
+  tax_name                       String?
+  tax_number                     String?
+  bank_name                      String?
+  bank_branch_code               String?
+  account_holder_name            String?
+  account_number                 String?
+  routing_number                 String?
+  bank_account_type              String?
+  currency_code                  String?
+  max_delivery_distance          Float    @default(0)
+  order_preparation_time         Int      @default(0)
+  promotional_text               String?  @db.VarChar(1024)
+  about_us                       String?  @db.Text
+  return_replacement_policy      String?  @db.Text
+  refund_policy                  String?  @db.Text
+  terms_and_conditions           String?  @db.Text
+  delivery_policy                String?  @db.Text
+  domestic_shipping_charges      Decimal? @db.Decimal(10, 2)
+  international_shipping_charges Decimal? @db.Decimal(10, 2)
+  metadata                       String?  @db.LongText
+  verification_status            String   @default("approved")
+  visibility_status              String   @default("visible")
+  fulfillment_type               String   @default("hyperlocal")
+  status                         String   @default("online")
+
+  storeZones    StoreZone[]
+  cartItems     CartItem[]
+  orderItems    OrderItem[]
+  storeVariants StoreProductVariant[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("stores")
+}
+
+// Minimal Product Model
+model Product {
+  id                  Int     @id @default(autoincrement())
+  title               String
+  main_image          String?
+  base_prep_time      Int     @default(0)
+  status              Boolean @default(true)
+  verification_status String  @default("approved")
+
+  cartItems CartItem[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("products")
+}
+
+// Minimal Variant Model
+model Variant {
+  id    Int    @id @default(autoincrement())
+  title String
+
+  storeProductVariants StoreProductVariant[]
+  cartItems            CartItem[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("variants")
+}
+
+model StoreProductVariant {
+  id         Int @id @default(autoincrement())
+  store_id   Int
+  variant_id Int
+  stock      Int @default(0)
+
+  store   Store   @relation(fields: [store_id], references: [id])
+  variant Variant @relation(fields: [variant_id], references: [id])
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("store_product_variants")
+}
+
+// Minimal Cart Model
+model Cart {
+  id Int @id @default(autoincrement())
+
+  items CartItem[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("carts")
+}
+
+// Minimal CartItem Model
+model CartItem {
+  id         Int @id @default(autoincrement())
+  cart_id    Int
+  store_id   Int
+  product_id Int
+  variant_id Int
+  quantity   Int
+
+  cart    Cart    @relation(fields: [cart_id], references: [id])
+  store   Store   @relation(fields: [store_id], references: [id])
+  product Product @relation(fields: [product_id], references: [id])
+  variant Variant @relation(fields: [variant_id], references: [id])
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("cart_items")
+}
+
+// Minimal Order Model
+model Order {
+  id                    Int     @id @default(autoincrement())
+  shipping_address_1    String?
+  shipping_city         String?
+  shipping_landmark     String?
+  shipping_state        String?
+  shipping_zipcode      String?
+  shipping_country      String?
+  shipping_country_code String?
+
+  items OrderItem[]
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("orders")
+}
+
+// Minimal OrderItem Model
+model OrderItem {
+  id       Int    @id @default(autoincrement())
+  order_id Int
+  store_id Int
+  status   String @default("pending") // Using string instead of enum for simplicity
+
+  order Order @relation(fields: [order_id], references: [id])
+  store Store @relation(fields: [store_id], references: [id])
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("order_items")
+}
+
+model StoreZone {
+  id         Int       @id @default(autoincrement())
+  store_id   Int
+  zone_id    Int
+  createdAt  DateTime? @default(now()) @map("created_at")
+  updatedAt  DateTime? @updatedAt @map("updated_at")
+
+  store      Store        @relation(fields: [store_id], references: [id], onDelete: Cascade)
+  zone       DeliveryZone @relation(fields: [zone_id], references: [id], onDelete: Cascade)
+
+  @@unique([store_id, zone_id])
+  @@map("store_zone")
+}
