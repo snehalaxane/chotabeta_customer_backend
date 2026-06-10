@@ -84,7 +84,8 @@ const validateBody = (schema) => (req, res, next) => {
   } catch (error) {
     if (error instanceof z.ZodError) {
       const formattedErrors = {};
-      error.errors.forEach((err) => {
+      const errs = error.errors || error.issues || [];
+      errs.forEach((err) => {
         formattedErrors[err.path.join(".")] = [err.message];
       });
       return res.status(422).json({
@@ -116,7 +117,8 @@ const validateQuery = (schema) => (req, res, next) => {
   } catch (error) {
     if (error instanceof z.ZodError) {
       const formattedErrors = {};
-      error.errors.forEach((err) => {
+      const errs = error.errors || error.issues || [];
+      errs.forEach((err) => {
         formattedErrors[err.path.join(".")] = [err.message];
       });
       return res.status(422).json({

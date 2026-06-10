@@ -20,7 +20,7 @@ class OtpController {
    */
   async register(req, res) {
     try {
-      const { name, email, mobile, password, confirm_password, fcm_token, device_type, app_type } = req.body;
+      const { name, email, mobile, password, confirm_password, fcm_token, device_type, app_type } = req.body || {};
 
       // --- Validation ---
       if (!name || !email || !mobile || !password || !confirm_password) {
@@ -113,7 +113,7 @@ class OtpController {
    */
   async sendOtp(req, res) {
     try {
-      const { mobile } = req.body;
+      const { mobile } = req.body || {};
 
       if (!mobile) {
         return res.status(400).json({
@@ -168,7 +168,7 @@ class OtpController {
    */
   async verifyOtp(req, res) {
     try {
-      const { mobile, otp, fcm_token, device_type, app_type } = req.body;
+      const { mobile, otp, fcm_token, device_type, app_type } = req.body || {};
 
       if (!mobile || !otp) {
         return res.status(400).json({
@@ -299,11 +299,11 @@ class OtpController {
   async login(req, res) {
     try {
       // Support both query params and body, though body is standard for POST
-      const mobile = req.body.mobile || req.query.mobile;
-      const password = req.body.password || req.query.password;
-      const fcm_token = req.body.fcm_token || req.query.fcm_token;
-      const device_type = req.body.device_type || req.query.device_type;
-      const app_type = req.body.app_type || req.query.app_type;
+      const mobile = req.body?.mobile || req.query?.mobile;
+      const password = req.body?.password || req.query?.password;
+      const fcm_token = req.body?.fcm_token || req.query?.fcm_token;
+      const device_type = req.body?.device_type || req.query?.device_type;
+      const app_type = req.body?.app_type || req.query?.app_type;
 
       if (!mobile || !password) {
         return res.status(400).json({
