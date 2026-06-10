@@ -1,6 +1,6 @@
 // services/deliveryZoneService.js
 
-const prisma = require("./config/database");
+const prisma = require("../config/database");
 
 class DeliveryZoneService {
 
@@ -126,7 +126,7 @@ class DeliveryZoneService {
   }
 
   static async getZonesAtPoint(latitude, longitude) {
-    const zones = await prisma.deliveryZone.findMany({
+    const zones = await deliveryZone.findMany({
       where: {
         status: "active",
       },
@@ -156,4 +156,4 @@ class DeliveryZoneService {
   }
 }
 
-module.exports = DeliveryZoneService;
+export default DeliveryZoneService;

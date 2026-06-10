@@ -1,7 +1,7 @@
 const { Model, DataTypes } = require("sequelize");
 const sequelize = require("../config/database");
 
-const DeliveryZoneService = require("../services/deliveryZoneService");
+const DeliveryZoneService = require("../services/deliveryZoneService").default;
 const generateUniqueSlug = require("../helpers/generateUniqueSlug");
 
 const StoreStatusEnum = require("../enums/StoreStatusEnum");

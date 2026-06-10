@@ -1,5 +1,5 @@
 const prisma = require("../config/database");
-const DeliveryZoneService = require("../services/deliveryZoneService");
+const DeliveryZoneService = require("../services/deliveryZoneService").default;
 
 class StoreController {
   /**
