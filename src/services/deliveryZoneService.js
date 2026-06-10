@@ -126,7 +126,7 @@ class DeliveryZoneService {
   }
 
   static async getZonesAtPoint(latitude, longitude) {
-    const zones = await deliveryZone.findMany({
+    const zones = await prisma.deliveryZone.findMany({
       where: {
         status: "active",
       },
@@ -156,4 +156,4 @@ class DeliveryZoneService {
   }
 }
 
-export default DeliveryZoneService;
+module.exports = DeliveryZoneService;
