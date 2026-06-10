@@ -8,10 +8,12 @@ const authRoutes = require("./routes/auth.routes");
 const deliveryZoneRoutes = require("./routes/deliveryZone.routes");
 const deliveryZoneController = require("./controllers/deliveryZone.controller");
 const { getStoresByLocationSchema, validateQuery } = require("./validations/deliveryZone.validation");
+const settingsRoutes = require("./routes/settings.routes");
 
 app.use(express.json());
 app.use("/api/auth", authRoutes);
 app.use("/api/delivery-zones", deliveryZoneRoutes);
+app.use("/api/settings", settingsRoutes);
 
 // Singular route to match superadmin URL: /api/delivery-zone/check?latitude=...&longitude=...
 app.get("/api/delivery-zone/check", deliveryZoneController.checkDelivery);
