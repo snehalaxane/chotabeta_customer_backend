@@ -27,6 +27,8 @@ model User {
   createdAt     DateTime  @default(now()) @map("created_at")
   updatedAt     DateTime  @updatedAt @map("updated_at")
 
+  fcmTokens     UserFcmToken[]
+
   @@map("users")
 }
 
@@ -42,6 +44,21 @@ model UserOtp {
   updatedAt   DateTime  @updatedAt @map("updated_at")
 
   @@map("user_otps")
+}
+
+model UserFcmToken {
+  id          Int      @id @default(autoincrement())
+  user_id     Int
+  fcm_token   String
+  device_type String?
+  app_type    String?
+
+  user        User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("user_fcm_tokens")
 }
 
 model SellerUser {
