@@ -146,6 +146,7 @@ class DeliveryZoneService {
       exists: !!zone,
       zone: zone?.name ?? null,
       zone_id: zone?.id ?? null,
+      zone_count: matchedZones.length,
       handling_charges:
         zone?.handling_charges ?? 0,
       delivery_time_per_km:
@@ -153,6 +154,16 @@ class DeliveryZoneService {
       buffer_time:
         zone?.buffer_time ?? 0,
     };
+  }
+
+  static async existsAtPoint(latitude, longitude) {
+    const zones = await prisma.deliveryZone.findMany({
+      where: { status: "active" },
+    });
+
+    return zones.some((zone) =>
+      this.containsPoint(zone, latitude, longitude)
+    );
   }
 }
 

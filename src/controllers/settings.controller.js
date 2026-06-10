@@ -1,16 +1,43 @@
 const prisma = require("../config/database");
 
+// Strip HTML tags and decode basic HTML entities to plain text
+function stripHtml(html) {
+  if (!html || typeof html !== "string") return html;
+  return html
+    .replace(/<[^>]*>/g, " ")           // remove all HTML tags
+    .replace(/&nbsp;/g, " ")            // decode &nbsp;
+    .replace(/&amp;/g, "&")             // decode &amp;
+    .replace(/&lt;/g, "<")             // decode &lt;
+    .replace(/&gt;/g, ">")             // decode &gt;
+    .replace(/&ndash;/g, "–")          // decode &ndash;
+    .replace(/&mdash;/g, "—")          // decode &mdash;
+    .replace(/&rsquo;/g, "'")          // decode &rsquo;
+    .replace(/&ldquo;/g, "\"")
+    .replace(/&rdquo;/g, "\"")
+    .replace(/\s+/g, " ")              // collapse multiple spaces
+    .trim();
+}
+
+const WEB_HTML_FIELDS = [
+  "returnRefundPolicy", "shippingPolicy", "privacyPolicy",
+  "termsCondition", "aboutUs"
+];
+
 class SettingsController {
   async getSettings(req, res) {
     try {
       const settings = await prisma.setting.findMany();
       
       const formattedData = settings.map(setting => {
-        let parsedValue = {};
+        let parsedValue = setting.value;
+        // Parse until we get an object (handles single and double-encoded JSON)
         try {
-          parsedValue = typeof setting.value === "string" ? JSON.parse(setting.value) : setting.value;
+          while (typeof parsedValue === "string") {
+            const attempt = JSON.parse(parsedValue);
+            parsedValue = attempt;
+          }
         } catch (e) {
-          parsedValue = setting.value;
+          // Not valid JSON, keep as-is
         }
         return {
           variable: setting.variable,
@@ -18,12 +45,74 @@ class SettingsController {
         };
       });
 
+      const DEFAULT_NOTIFICATION_TYPES = [
+        "general", "order", "payment", "delivery", "promotion", "system",
+        "product", "order_update", "new_order", "return_order",
+        "return_order_update", "wallet_transaction", "withdrawal_request",
+        "withdrawal_process", "settlement_process", "settlement_create",
+        "order_ready_for_pickup", "return_order_available"
+      ];
+
+      const DEFAULT_APP_VALUES = {
+        customerAppstoreLink: "https://apps.apple.com/us/app/chota-beta-from-store-to-door/id6761712523",
+        customerPlaystoreLink: "https://play.google.com/store/apps/details?id=com.goexperts.chotabeta&hl=en_IN",
+        customerAppScheme: "",
+        sellerAppstoreLink: "",
+        sellerPlaystoreLink: "https://play.google.com/store/apps/details?id=com.goexperts.chotabetaseller&hl=en_IN",
+        sellerAppScheme: "",
+        appstoreLink: "",
+        playstoreLink: "",
+        appScheme: "",
+        appDomainName: ""
+      };
+
       // If the database has settings, use them. Otherwise, fallback to the default static data you provided.
       if (formattedData.length > 0) {
+        // Ensure notificationType is always present in system, and app variable has all fields
+        let hasAppVariable = false;
+
+        const enrichedData = formattedData.map(item => {
+          if (item.variable === "system" && typeof item.value === "object") {
+            return {
+              ...item,
+              value: {
+                ...item.value,
+                notificationType: item.value.notificationType ?? DEFAULT_NOTIFICATION_TYPES
+              }
+            };
+          }
+          if (item.variable === "app") {
+            hasAppVariable = true;
+            return {
+              ...item,
+              value: {
+                // Start with defaults, then override with whatever is in DB
+                ...DEFAULT_APP_VALUES,
+                ...(typeof item.value === "object" ? item.value : {})
+              }
+            };
+          }
+          if (item.variable === "web" && typeof item.value === "object") {
+            const plainValue = { ...item.value };
+            WEB_HTML_FIELDS.forEach(field => {
+              if (plainValue[field]) {
+                plainValue[field] = stripHtml(plainValue[field]);
+              }
+            });
+            return { ...item, value: plainValue };
+          }
+          return item;
+        });
+
+        // If app variable is not in DB at all, inject it with defaults
+        if (!hasAppVariable) {
+          enrichedData.push({ variable: "app", value: DEFAULT_APP_VALUES });
+        }
+
         return res.json({
           success: true,
           message: "Settings Fetched Successfully",
-          data: formattedData
+          data: enrichedData
         });
       }
 
