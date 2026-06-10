@@ -1,6 +1,6 @@
 // services/deliveryZoneService.js
 
-const prisma = require("../config/prisma");
+const prisma = require("./config/database");
 
 class DeliveryZoneService {
 
